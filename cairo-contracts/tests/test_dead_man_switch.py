@@ -3,12 +3,15 @@ import os
 import pytest
 from starkware.starknet.testing.starknet import Starknet
 
+DUMMY_TOKEN_CONTRACT_FILE = os.path.join("contracts", "dummy_token.cairo")
 CONTRACT_FILE = os.path.join("contracts", "dead_man_switch.cairo")
 
 @pytest.fixture
 async def contract():
     ''''Should be run before every contract'''
     starknet = await Starknet.empty()
+    dummyToken = await starknet.deploy(source=DUMMY_TOKEN_CONTRACT_FILE,)
+    print (dummyToken)
     return await starknet.deploy(source=CONTRACT_FILE,)
     
 

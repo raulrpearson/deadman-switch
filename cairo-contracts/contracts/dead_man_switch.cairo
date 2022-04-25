@@ -19,6 +19,10 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
+@storage_var
+func token_to_redeem_address_storage() -> (token_address):
+end
+
 @event
 func HeirRedeemed(heir : felt, owner : felt, amount : Uint256):
 end
@@ -59,23 +63,23 @@ func heir_of{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
 end
 
 @external
-func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner: felt):
-
+func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt):
     # Check that the caller is indeed an Heir
     let (caller_address) = get_caller_address()
-    assert caller_address = owner_heir_storage.read(owner)
+    # assert caller_address = owner_heir_storage.read(owner)
 
     # Check that the owner is now really 'dead'
     let (current_timestamp) = get_block_timestamp()
-    assert owner_last_timestamp_storage.read() + REDEEM_DEATH_DELAY <= current_timestamp
+    # assert owner_last_timestamp_storage.read() + REDEEM_DEATH_DELAY <= current_timestamp
 
     # Transfer the total owner's balance
-    let (owner_total_balance) = IERC20.balanceOf(owner)
-    IERC20.transfer(caller_address, owner_total_balance)
+    # let (owner_total_balance) = IERC20.balanceOf(owner)
+    # IERC20.transfer(caller_address, owner_total_balance)
 
-    HeirRedeemed.emit(caller_address, owner, owner_total_balance)
+    # HeirRedeemed.emit(caller_address, owner, owner_total_balance)
 
     return ()
+end
 
 func revoke_previous_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller_address) = get_caller_address()
