@@ -179,8 +179,8 @@ func checkAllowanceFor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 ):
     alloc_locals
     let (allowance) = get_allowance_for(heir)
-    let zeroAsUint256 = Uint256(0, 0)
-    let (is_zero) = uint256_lt(zeroAsUint256, allowance)
+    let oneAsUint256 = Uint256(1, 0)
+    let (is_zero) = uint256_lt(allowance, oneAsUint256)
     with_attr error_message("Please allow before setting an heir"):
         assert is_zero = 0
     end

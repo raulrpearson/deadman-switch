@@ -22,17 +22,19 @@ async def contract(starknet, dummy_token_contract):
 
 @pytest.mark.asyncio
 @pytest.mark.set_heir
-async def test_set_heir(contract):
-    await contract.set_heir(42).invoke(caller_address= 12)
-    heir_info = await contract.heir_of(12, 10).call()
+async def test_set_heir(dummy_token_contract, contract):
+    await dummy_token_contract.approve(contract.contract_address,(100, 00)).invoke(caller_address=42)
+    await contract.set_heir(42, 10).invoke(caller_address= 12)
+    heir_info = await contract.heir_of(12).call()
     assert heir_info.result.heir == 42
 
 @pytest.mark.asyncio
 @pytest.mark.set_heir
-async def test_set_heir_balance_of(dummy_token_contract, contract):
-    await contract.set_heir(42,10).invoke(caller_address=12)
-    balance = await dummy_token_contract.allowance(12, contract.contract_address).call()
-    assert balance.result.remaining == (0, 0)
+async def test_set_heir_not_allowed(contract):
+
+    with pytest.raises(Exception) as execution_info:
+       await contract.set_heir(42, 10).invoke(caller_address= 12)
+    assert "Please allow before setting an heir" in execution_info.value.args[1]["message"]
 
 @pytest.mark.asyncio
 @pytest.mark.get_allowance
@@ -46,3 +48,4 @@ async def test_get_allowance_for(dummy_token_contract, contract):
 async def test_get_allowance_for_zero(contract):
     allowance_info = await contract.get_allowance_for(12).invoke()
     assert allowance_info.result.allowance == (0, 0)
+
