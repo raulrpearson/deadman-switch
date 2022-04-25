@@ -4,6 +4,8 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.starknet.common.syscalls import get_block_number, get_block_timestamp
 
+const REDEEM_DEAD_DELAY = 63113904  # 2 years
+
 # Could be holding an array of heirs
 # Then this could be turned into struct to hold their shares
 @storage_var
