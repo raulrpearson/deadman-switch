@@ -55,6 +55,20 @@ func token_to_redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     return token_to_redeem_address_storage.read()
 end
 
+@view
+func heir_of{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt) -> (
+    heir : felt
+):
+    return owner_heir_storage.read(owner)
+end
+
+@view
+func delay_of{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt) -> (
+    delayt : felt
+):
+    return owner_delay_storage.read(owner)
+end
+
 # --- External functions
 
 @external
@@ -81,20 +95,6 @@ func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
         token_to_redeem_address, contract_address, Uint256(12, 12)
     )
     return ()
-end
-
-@view
-func heir_of{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt) -> (
-    heir : felt
-):
-    return owner_heir_storage.read(owner)
-end
-
-@view
-func delay_of{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt) -> (
-    delayt : felt
-):
-    return owner_delay_storage.read(owner)
 end
 
 @external
