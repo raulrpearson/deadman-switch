@@ -23,6 +23,10 @@ end
 # ---- Events
 
 @event
+func NotDead()
+end
+
+@event
 func HeirRedeemed(heir : felt, owner : felt, amount : Uint256):
 end
 
@@ -80,6 +84,9 @@ func alive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller_address) = get_caller_address()
     let (current_timestamp) = get_block_timestamp()
     owner_last_timestamp_storage.write(caller_address, current_timestamp)
+
+    NotDead.emit()
+
     return ()
 end
 
@@ -113,7 +120,7 @@ func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(o
     # Check that the owner is now really 'dead'
     let (current_timestamp) = get_block_timestamp()
     let (owner_last_seen) = owner_last_timestamp_storage.read(owner)
-    let time_of_death = 2  # owner_last_seen + REDEEM_DEATH_DELAY
+    let time_of_death = owner_last_seen + REDEEM_DEATH_DELAY
     assert_le_felt(time_of_death, current_timestamp)
 
     # Transfer the total owner's balance
