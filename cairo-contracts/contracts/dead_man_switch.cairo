@@ -4,7 +4,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
 from starkware.starknet.common.syscalls import get_block_number, get_block_timestamp
 from contracts.ERC20.IERC20 import IERC20
-from starkware.cairo.common.uint256 import Uint256
+from starkware.cairo.common.uint256 import Uint256, uint256_lt
 from starkware.cairo.common.math import assert_le_felt, assert_lt_felt
 
 # ---- Constants
@@ -96,6 +96,16 @@ func delay_of{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     return owner_delay_storage.read(owner)
 end
 
+@view
+func get_allowance_for{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    heir : felt
+) -> (allowance : Uint256):
+    let (token_address) = token_to_redeem_address_storage.read()
+    let (contract_address) = get_contract_address()
+    let (allowance) = IERC20.allowance(token_address, heir, contract_address)
+    return (allowance)
+end
+
 # --- External functions
 
 @external
@@ -114,7 +124,7 @@ func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     heir : felt, delay : felt
 ):
     alloc_locals
-    # assert set heir pas zero
+    checkAllowanceFor(heir)
     let (caller_address) = get_caller_address()
     let (contract_address) = get_contract_address()
     revoke_previous_owner()
@@ -160,6 +170,19 @@ func revoke_previous_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     let (approved) = IERC20.approve(token_to_redeem_address, heir, Uint256(0, 0))
     with_attr error_message("Issue while revoking the old heir"):
         assert approved = 1
+    end
+    return ()
+end
+
+func checkAllowanceFor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    heir : felt
+):
+    alloc_locals
+    let (allowance) = get_allowance_for(heir)
+    let zeroAsUint256 = Uint256(0, 0)
+    let (is_zero) = uint256_lt(zeroAsUint256, allowance)
+    with_attr error_message("Please allow before setting an heir"):
+        assert is_zero = 0
     end
     return ()
 end
