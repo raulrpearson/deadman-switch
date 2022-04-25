@@ -113,9 +113,7 @@ func alive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller_address) = get_caller_address()
     let (current_timestamp) = get_block_timestamp()
     owner_last_timestamp_storage.write(caller_address, current_timestamp)
-
     OwnerNotDead.emit(caller_address)
-
     return ()
 end
 
@@ -123,11 +121,9 @@ end
 func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     heir : felt, delay : felt
 ):
-    alloc_locals
     checkAllowanceFor(heir)
     let (caller_address) = get_caller_address()
     let (contract_address) = get_contract_address()
-    revoke_previous_owner()
     owner_heir_storage.write(caller_address, heir)
     owner_delay_storage.write(caller_address, delay)
     HeirSet.emit(caller_address, heir, delay)
@@ -137,9 +133,11 @@ end
 
 @external
 func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt):
+    alloc_locals
     # Check that the caller is indeed an Heir
     let (caller_address) = get_caller_address()
-    # assert caller_address = owner_heir_storage.read(owner)
+    let (owner_address) = owner_heir_storage.read(owner)
+    assert caller_address = owner_address
 
     # Check that the owner is now really 'dead'
     let (current_timestamp) = get_block_timestamp()
@@ -148,29 +146,13 @@ func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(o
     let time_of_death = owner_last_seen + redeem_death_delay
     assert_le_felt(time_of_death, current_timestamp)
 
-    # Transfer the total owner's balance
+    # actual transfer
+    let (balance) = get_min_for(owner)
     let (token_to_redeem_address) = token_to_redeem_address_storage.read()
-    let (owner_total_balance) = IERC20.balanceOf(token_to_redeem_address, owner)
-    IERC20.transfer(token_to_redeem_address, caller_address, owner_total_balance)
+    IERC20.transfer(token_to_redeem_address, caller_address, balance)
 
-    HeirRedeemed.emit(caller_address, owner, owner_total_balance)
+    HeirRedeemed.emit(caller_address, owner, balance)
 
-    return ()
-end
-
-# --- Internal functions
-
-func revoke_previous_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
-    let (caller_address) = get_caller_address()
-    let (heir) = owner_heir_storage.read(caller_address)
-    if heir == 0:
-        return ()
-    end
-    let (token_to_redeem_address) = token_to_redeem_address_storage.read()
-    let (approved) = IERC20.approve(token_to_redeem_address, heir, Uint256(0, 0))
-    with_attr error_message("Issue while revoking the old heir"):
-        assert approved = 1
-    end
     return ()
 end
 
@@ -185,4 +167,21 @@ func checkAllowanceFor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
         assert is_zero = 0
     end
     return ()
+end
+
+func get_min_for{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    owner : felt
+) -> (balance : Uint256):
+    alloc_locals
+    # Transfer the total owner's balance
+    let (token_to_redeem_address) = token_to_redeem_address_storage.read()
+    let (contract_address) = get_contract_address()
+    # TODO Should be changed to min between balance and allowance
+    let (owner_total_balance) = IERC20.balanceOf(token_to_redeem_address, owner)
+    let (allowance) = IERC20.allowance(token_to_redeem_address, owner, contract_address)
+    let (lt) = uint256_lt(owner_total_balance, allowance)
+    if lt == 1:
+        return (owner_total_balance)
+    end
+    return (allowance)
 end

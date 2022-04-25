@@ -1,6 +1,7 @@
 import os
 
 import pytest
+import time
 from starkware.starknet.testing.starknet import Starknet
 
 DUMMY_TOKEN_CONTRACT_FILE = os.path.join("contracts", "ERC20", "dummy_token.cairo")
@@ -31,7 +32,7 @@ async def test_set_heir(dummy_token_contract, contract):
 @pytest.mark.asyncio
 @pytest.mark.set_heir
 async def test_set_heir_not_allowed(contract):
-
+    await dummy_token_contract.approve(contract.contract_address,(0, 0)).invoke(caller_address=42)
     with pytest.raises(Exception) as execution_info:
        await contract.set_heir(42, 10).invoke(caller_address= 12)
     assert "Please allow before setting an heir" in execution_info.value.args[1]["message"]
@@ -42,6 +43,13 @@ async def test_get_allowance_for(dummy_token_contract, contract):
     await dummy_token_contract.approve(contract.contract_address,(42, 42) ).invoke(caller_address=12)
     allowance_info = await contract.get_allowance_for(12).invoke()
     assert allowance_info.result.allowance == (42, 42)
+
+@pytest.mark.asyncio
+@pytest.mark.get_allowance
+async def test_get_allowance_for_zero(contract):
+    allowance_info = await contract.get_allowance_for(12).invoke()
+    assert allowance_info.result.allowance == (0, 0)
+
 
 @pytest.mark.asyncio
 @pytest.mark.get_allowance
