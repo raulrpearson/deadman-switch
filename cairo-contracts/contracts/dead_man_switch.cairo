@@ -8,8 +8,6 @@ from starkware.cairo.common.uint256 import Uint256
 from starkware.cairo.common.math import assert_le_felt, assert_lt_felt
 
 # ---- Constants
-
-const REDEEM_DEATH_DELAY = 63113904  # 2 years
 const MAX_128_BITS_VALUE = 340282366920938463463374607431768211455
 
 # ---- Constructor
@@ -41,6 +39,10 @@ func owner_heir_storage(owner : felt) -> (heir : felt):
 end
 
 @storage_var
+func owner_delay_storage(owner : felt) -> (delay : felt):
+end
+
+@storage_var
 func owner_last_timestamp_storage(owner : felt) -> (last_seen : felt):
 end
 
@@ -64,12 +66,16 @@ func alive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
 end
 
 @external
-func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(heir : felt):
+func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    heir : felt, delay : felt
+):
     alloc_locals
     let (caller_address) = get_caller_address()
     let (contract_address) = get_contract_address()
     revoke_previous_owner()
     owner_heir_storage.write(caller_address, heir)
+    owner_delay_storage.write(caller_address, delay)
+
     let (token_to_redeem_address) = token_to_redeem_address_storage.read()
     let (approved) = IERC20.delegate_approve(
         token_to_redeem_address, contract_address, Uint256(12, 12)
@@ -84,6 +90,13 @@ func heir_of{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     return owner_heir_storage.read(owner)
 end
 
+@view
+func delay_of{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt) -> (
+    delayt : felt
+):
+    return owner_delay_storage.read(owner)
+end
+
 @external
 func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt):
     # Check that the caller is indeed an Heir
@@ -93,7 +106,7 @@ func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(o
     # Check that the owner is now really 'dead'
     let (current_timestamp) = get_block_timestamp()
     let (owner_last_seen) = owner_last_timestamp_storage.read(owner)
-    let time_of_death = owner_last_seen + REDEEM_DEATH_DELAY
+    let time_of_death = 2  # owner_last_seen + REDEEM_DEATH_DELAY
     assert_le_felt(time_of_death, current_timestamp)
 
     # Transfer the total owner's balance
