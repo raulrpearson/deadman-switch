@@ -28,6 +28,10 @@ end
 func HeirRedeemed(heir : felt, owner : felt, amount : Uint256):
 end
 
+@event
+func HeirSet(heir : felt, owner : felt)
+end
+
 # ---- Storage vars
 
 @storage_var
