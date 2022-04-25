@@ -1,4 +1,4 @@
-# DeadMan's Switch
+# Dead Man's Switch
 
 Very cool project!
 
