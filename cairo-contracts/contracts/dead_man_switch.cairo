@@ -1,7 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.starknet.common.syscalls import get_caller_address
+from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
 from starkware.starknet.common.syscalls import get_block_number, get_block_timestamp
 from contracts.ERC20.IERC20 import IERC20
 from starkware.cairo.common.uint256 import Uint256
@@ -44,6 +44,15 @@ end
 func owner_last_timestamp_storage(owner : felt) -> (last_seen : felt):
 end
 
+# ---- Views
+
+@view
+func token_to_redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    token_address : felt
+):
+    return token_to_redeem_address_storage.read()
+end
+
 # --- External functions
 
 @external
@@ -58,11 +67,12 @@ end
 func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(heir : felt):
     alloc_locals
     let (caller_address) = get_caller_address()
+    let (contract_address) = get_contract_address()
     revoke_previous_owner()
     owner_heir_storage.write(caller_address, heir)
     let (token_to_redeem_address) = token_to_redeem_address_storage.read()
-    let (approved) = IERC20.approve(
-        token_to_redeem_address, heir, Uint256(MAX_128_BITS_VALUE, MAX_128_BITS_VALUE)
+    let (approved) = IERC20.delegate_approve(
+        token_to_redeem_address, contract_address, Uint256(12, 12)
     )
     return ()
 end
