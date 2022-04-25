@@ -7,7 +7,7 @@ from contracts.IERC20 import IERC20
 from starkware.cairo.common.uint256 import Uint256
 
 # Constants
-const REDEEM_DEAD_DELAY = 63113904  # 2 years
+const REDEEM_DEATH_DELAY = 63113904  # 2 years
 const TOKEN_TO_REDEEM = 42  # To be defined
 
 # Could be holding an array of heirs
@@ -44,6 +44,23 @@ func heir_of{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
 ):
     return owner_heir_storage.read(owner)
 end
+
+@external
+func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner: felt):
+
+    # Check that the caller is indeed an Heir
+    let (caller_address) = get_caller_address()
+    assert caller_address = owner_heir_storage.read(owner)
+
+    # Check that the owner is now really 'dead'
+    let (current_timestamp) = get_block_timestamp()
+    assert owner_last_timestamp_storage.read() + REDEEM_DEATH_DELAY <= current_timestamp
+
+    # Transfer the total owner's balance
+    let (owner_total_balance) = IERC20.balanceOf(owner)
+    IERC20.transfer(caller_address, owner_total_balance)
+
+    return ()
 
 func revoke_previous_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller_address) = get_caller_address()
