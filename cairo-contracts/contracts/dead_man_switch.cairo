@@ -3,12 +3,12 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.starknet.common.syscalls import get_block_number, get_block_timestamp
-from contracts.IERC20 import IERC20
+from contracts.ERC20.IERC20 import IERC20
 from starkware.cairo.common.uint256 import Uint256
 
 # Constants
 const REDEEM_DEATH_DELAY = 63113904  # 2 years
-const MAX_128_BITS_VALUE = 340282366920938463463374607431768211456
+const MAX_128_BITS_VALUE = 340282366920938463463374607431768211455
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
