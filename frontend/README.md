@@ -80,8 +80,8 @@ Prior to your first deployment, you'll need to do a few things:
 - Create two apps on Fly, one for staging and one for production:
 
   ```sh
-  fly create frontend-8181
-  fly create frontend-8181-staging
+  fly create frontend
+  fly create frontend-staging
   ```
 
   - Initialize Git.
@@ -101,8 +101,8 @@ Prior to your first deployment, you'll need to do a few things:
 - Add a `SESSION_SECRET` to your fly app secrets, to do this you can run the following commands:
 
   ```sh
-  fly secrets set SESSION_SECRET=$(openssl rand -hex 32) --app frontend-8181
-  fly secrets set SESSION_SECRET=$(openssl rand -hex 32) --app frontend-8181-staging
+  fly secrets set SESSION_SECRET=$(openssl rand -hex 32) --app frontend
+  fly secrets set SESSION_SECRET=$(openssl rand -hex 32) --app frontend-staging
   ```
 
   If you don't have openssl installed, you can also use [1password](https://1password.com/generate-password) to generate a random secret, just replace `$(openssl rand -hex 32)` with the generated secret.
@@ -110,8 +110,8 @@ Prior to your first deployment, you'll need to do a few things:
 - Create a persistent volume for the sqlite database for both your staging and production environments. Run the following:
 
   ```sh
-  fly volumes create data --size 1 --app frontend-8181
-  fly volumes create data --size 1 --app frontend-8181-staging
+  fly volumes create data --size 1 --app frontend
+  fly volumes create data --size 1 --app frontend-staging
   ```
 
 Now that everything is set up you can commit and push your changes to your repo. Every commit to your `main` branch will trigger a deployment to your production environment, and every commit to your `dev` branch will trigger a deployment to your staging environment.
