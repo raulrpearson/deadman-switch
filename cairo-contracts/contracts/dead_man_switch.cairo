@@ -3,7 +3,7 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.starknet.common.syscalls import get_block_number, get_block_timestamp
-from contracts.IERC20 import IERC20
+from IERC20 import IERC20
 from starkware.cairo.common.uint256 import Uint256
 
 # Constants
