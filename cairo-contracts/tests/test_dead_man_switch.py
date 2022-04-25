@@ -24,13 +24,13 @@ async def contract(starknet, dummy_token_contract):
 @pytest.mark.set_heir
 async def test_set_heir(contract):
     await contract.set_heir(42).invoke(caller_address= 12)
-    heir_info = await contract.heir_of(12).call()
+    heir_info = await contract.heir_of(12, 10).call()
     assert heir_info.result.heir == 42
 
 @pytest.mark.asyncio
 @pytest.mark.set_heir
 async def test_set_heir_balance_of(dummy_token_contract, contract):
-    await contract.set_heir(42).invoke(caller_address=12)
+    await contract.set_heir(42,10).invoke(caller_address=12)
     balance = await dummy_token_contract.allowance(12, contract.contract_address).call()
     assert balance.result.remaining == (0, 0)
 
