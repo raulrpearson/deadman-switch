@@ -10,6 +10,10 @@ from starkware.cairo.common.uint256 import Uint256
 const REDEEM_DEATH_DELAY = 63113904  # 2 years
 const TOKEN_TO_REDEEM = 42  # To be defined
 
+@event
+func HeirRedeemed(heir : felt, owner : felt, amount : Uint256):
+end
+
 # Could be holding an array of heirs
 # Then this could be turned into struct to hold their shares
 @storage_var
@@ -59,6 +63,8 @@ func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(o
     # Transfer the total owner's balance
     let (owner_total_balance) = IERC20.balanceOf(owner)
     IERC20.transfer(caller_address, owner_total_balance)
+
+    HeirRedeemed.emit(caller_address, owner, owner_total_balance)
 
     return ()
 
