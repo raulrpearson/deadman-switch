@@ -3,8 +3,9 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.starknet.common.syscalls import get_block_number, get_block_timestamp
-from contracts.IERC20 import IERC20
+from IERC20 import IERC20
 from starkware.cairo.common.uint256 import Uint256
+from starkware.cairo.common.math import assert_le_felt, assert_lt_felt
 
 # Constants
 const REDEEM_DEATH_DELAY = 63113904  # 2 years
@@ -70,11 +71,13 @@ func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(o
 
     # Check that the owner is now really 'dead'
     let (current_timestamp) = get_block_timestamp()
-    # assert owner_last_timestamp_storage.read() + REDEEM_DEATH_DELAY <= current_timestamp
+    let (owner_last_seen) = owner_last_timestamp_storage.read(owner)
+    let time_of_death = owner_last_seen + REDEEM_DEATH_DELAY
+    assert_le_felt(time_of_death, current_timestamp)
 
     # Transfer the total owner's balance
-    # let (owner_total_balance) = IERC20.balanceOf(owner)
-    # IERC20.transfer(caller_address, owner_total_balance)
+    let (owner_total_balance) = IERC20.balanceOf(owner)
+    IERC20.transfer(caller_address, owner_total_balance)
 
     # HeirRedeemed.emit(caller_address, owner, owner_total_balance)
 
