@@ -17,4 +17,4 @@ async def contract():
 async def test_set_owner(contract):
     execution_info = await contract.set_owner(42).invoke()
     heir_info = await contract.heir_of(0).call()
-    assert heir_info.result.heir  == 42
+    assert heir_info.result.heir == 42

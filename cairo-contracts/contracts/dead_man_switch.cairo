@@ -3,6 +3,8 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.starknet.common.syscalls import get_block_number, get_block_timestamp
+from contracts.IERC20 import IERC20
+from starkware.cairo.common.uint256 import Uint256
 
 # Constants
 const REDEEM_DEAD_DELAY = 63113904  # 2 years
@@ -28,10 +30,11 @@ end
 
 @external
 func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(heir : felt):
+    alloc_locals
     let (caller_address) = get_caller_address()
-    # TODO revoke previous owner?
-    # Approve new owner using IERC20 interface
+    revoke_previous_owner()
     owner_heir_storage.write(caller_address, heir)
+    let (approved) = IERC20.approve(TOKEN_TO_REDEEM, heir, Uint256(0, 0))
     return ()
 end
 
@@ -40,4 +43,17 @@ func heir_of{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     heir : felt
 ):
     return owner_heir_storage.read(owner)
+end
+
+func revoke_previous_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+    let (caller_address) = get_caller_address()
+    let (heir) = owner_heir_storage.read(caller_address)
+    if heir == 0:
+        return ()
+    end
+    let (approved) = IERC20.approve(TOKEN_TO_REDEEM, heir, Uint256(0, 0))
+    with_attr error_message("Issue while revoking the old heir"):
+        assert approved = 1
+    end
+    return ()
 end
