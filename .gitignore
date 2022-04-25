@@ -1,2 +1,6 @@
 .vscode
 .env
+cairo-contracts/node.json
+cairo-contracts/accounts.json
+cairo-contracts/artifacts
+cairo-contracts/tests/__pycache__
