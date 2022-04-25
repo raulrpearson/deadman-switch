@@ -8,7 +8,6 @@ from starkware.cairo.common.uint256 import Uint256
 
 # Constants
 const REDEEM_DEATH_DELAY = 63113904  # 2 years
-const TOKEN_TO_REDEEM = 42  # To be defined
 const MAX_128_BITS_VALUE = 340282366920938463463374607431768211456
 
 @constructor
@@ -51,7 +50,10 @@ func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     let (caller_address) = get_caller_address()
     revoke_previous_owner()
     owner_heir_storage.write(caller_address, heir)
-    let (approved) = IERC20.approve(TOKEN_TO_REDEEM, heir, Uint256(0, 0))
+    let (token_to_redeem_address) = token_to_redeem_address_storage.read()
+    let (approved) = IERC20.approve(
+        token_to_redeem_address, heir, Uint256(MAX_128_BITS_VALUE, MAX_128_BITS_VALUE)
+    )
     return ()
 end
 
@@ -87,7 +89,8 @@ func revoke_previous_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, ran
     if heir == 0:
         return ()
     end
-    let (approved) = IERC20.approve(TOKEN_TO_REDEEM, heir, Uint256(0, 0))
+    let (token_to_redeem_address) = token_to_redeem_address_storage.read()
+    let (approved) = IERC20.approve(token_to_redeem_address, heir, Uint256(0, 0))
     with_attr error_message("Issue while revoking the old heir"):
         assert approved = 1
     end
