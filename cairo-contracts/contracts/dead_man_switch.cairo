@@ -4,6 +4,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.starknet.common.syscalls import get_block_number, get_block_timestamp
 
+# Constants
 const REDEEM_DEAD_DELAY = 63113904  # 2 years
 const TOKEN_TO_REDEEM = 42  # To be defined
 
