@@ -27,7 +27,7 @@ func HeirRedeemed(heir : felt, owner : felt, amount : Uint256):
 end
 
 @event
-func HeirSet(heir : felt, owner : felt)
+func HeirSet(heir : felt, owner : felt, delay : felt)
 end
 
 # ---- Storage vars
@@ -98,6 +98,9 @@ func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     let (approved) = IERC20.delegate_approve(
         token_to_redeem_address, contract_address, Uint256(12, 12)
     )
+
+    HeirSet.emit(caller_address, heir, delay)
+
     return ()
 end
 
