@@ -5,6 +5,7 @@ from starkware.starknet.common.syscalls import get_caller_address
 from starkware.starknet.common.syscalls import get_block_number, get_block_timestamp
 
 const REDEEM_DEAD_DELAY = 63113904  # 2 years
+const TOKEN_TO_REDEEM = 42  # To be defined
 
 # Could be holding an array of heirs
 # Then this could be turned into struct to hold their shares
@@ -27,6 +28,8 @@ end
 @external
 func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(heir : felt):
     let (caller_address) = get_caller_address()
+    # TODO revoke previous owner?
+    # Approve new owner using IERC20 interface
     owner_heir_storage.write(caller_address, heir)
     return ()
 end
