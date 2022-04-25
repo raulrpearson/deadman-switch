@@ -5,10 +5,14 @@ from starkware.starknet.common.syscalls import get_caller_address
 from starkware.starknet.common.syscalls import get_block_number, get_block_timestamp
 from contracts.ERC20.IERC20 import IERC20
 from starkware.cairo.common.uint256 import Uint256
+from starkware.cairo.common.math import assert_le_felt, assert_lt_felt
 
-# Constants
+# ---- Constants
+
 const REDEEM_DEATH_DELAY = 63113904  # 2 years
 const MAX_128_BITS_VALUE = 340282366920938463463374607431768211455
+
+# ---- Constructor
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -18,12 +22,16 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
-@storage_var
-func token_to_redeem_address_storage() -> (token_address):
-end
+# ---- Events
 
 @event
 func HeirRedeemed(heir : felt, owner : felt, amount : Uint256):
+end
+
+# ---- Storage vars
+
+@storage_var
+func token_to_redeem_address_storage() -> (token_address):
 end
 
 # Could be holding an array of heirs
@@ -35,6 +43,8 @@ end
 @storage_var
 func owner_last_timestamp_storage(owner : felt) -> (last_seen : felt):
 end
+
+# --- External functions
 
 @external
 func alive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
@@ -72,16 +82,21 @@ func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(o
 
     # Check that the owner is now really 'dead'
     let (current_timestamp) = get_block_timestamp()
-    # assert owner_last_timestamp_storage.read() + REDEEM_DEATH_DELAY <= current_timestamp
+    let (owner_last_seen) = owner_last_timestamp_storage.read(owner)
+    let time_of_death = owner_last_seen + REDEEM_DEATH_DELAY
+    assert_le_felt(time_of_death, current_timestamp)
 
     # Transfer the total owner's balance
-    # let (owner_total_balance) = IERC20.balanceOf(owner)
-    # IERC20.transfer(caller_address, owner_total_balance)
+    let (token_to_redeem_address) = token_to_redeem_address_storage.read()
+    let (owner_total_balance) = IERC20.balanceOf(token_to_redeem_address, owner)
+    IERC20.transfer(token_to_redeem_address, caller_address, owner_total_balance)
 
-    # HeirRedeemed.emit(caller_address, owner, owner_total_balance)
+    HeirRedeemed.emit(caller_address, owner, owner_total_balance)
 
     return ()
 end
+
+# --- Internal functions
 
 func revoke_previous_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller_address) = get_caller_address()

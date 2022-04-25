@@ -1,6 +1,8 @@
 .vscode
 .env
+compiled_contract.json
 cairo-contracts/node.json
 cairo-contracts/accounts.json
 cairo-contracts/artifacts
 cairo-contracts/tests/__pycache__
+*.json
