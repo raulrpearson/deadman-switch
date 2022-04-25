@@ -29,6 +29,10 @@ end
 func HeirRedeemed(heir : felt, owner : felt, amount : Uint256):
 end
 
+@event
+func isHeStillAlive(res : felt):
+end
+
 # ---- Storage vars
 
 @storage_var
@@ -93,6 +97,7 @@ func is_he_still_alive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
     let (owner_last_seen) = owner_last_timestamp_storage.read(owner)
     let (current_time) = get_block_timestamp()
     let (res) = is_le(owner_last_seen + REDEEM_DEATH_DELAY, current_time)
+    isHeStillAlive.emit(res)
     return (res=res)
 end
 
