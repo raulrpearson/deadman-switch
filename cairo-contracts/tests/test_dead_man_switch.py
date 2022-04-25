@@ -40,8 +40,6 @@ async def accounts():
 
 # 2. Send transaction through Account
     #
->>>>>>> f14544913e116f70f2b6e26de28f7d264a50ec51
-
 @pytest.mark.asyncio
 @pytest.mark.set_heir
 async def test_set_heir(contract):
