@@ -78,10 +78,11 @@ func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(o
     assert_le_felt(time_of_death, current_timestamp)
 
     # Transfer the total owner's balance
-    let (owner_total_balance) = IERC20.balanceOf(owner)
-    IERC20.transfer(caller_address, owner_total_balance)
+    let (token_to_redeem_address) = token_to_redeem_address_storage.read()
+    let (owner_total_balance) = IERC20.balanceOf(token_to_redeem_address, owner)
+    IERC20.transfer(token_to_redeem_address, caller_address, owner_total_balance)
 
-    # HeirRedeemed.emit(caller_address, owner, owner_total_balance)
+    HeirRedeemed.emit(caller_address, owner, owner_total_balance)
 
     return ()
 end
