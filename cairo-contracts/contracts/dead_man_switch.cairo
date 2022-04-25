@@ -7,9 +7,12 @@ from contracts.IERC20 import IERC20
 from starkware.cairo.common.uint256 import Uint256
 from starkware.cairo.common.math import assert_le_felt, assert_lt_felt
 
-# Constants
+# ---- Constants
+
 const REDEEM_DEATH_DELAY = 63113904  # 2 years
 const MAX_128_BITS_VALUE = 340282366920938463463374607431768211456
+
+# ---- Constructor
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -19,12 +22,16 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
-@storage_var
-func token_to_redeem_address_storage() -> (token_address):
-end
+# ---- Events
 
 @event
 func HeirRedeemed(heir : felt, owner : felt, amount : Uint256):
+end
+
+# ---- Storage vars
+
+@storage_var
+func token_to_redeem_address_storage() -> (token_address):
 end
 
 # Could be holding an array of heirs
@@ -36,6 +43,8 @@ end
 @storage_var
 func owner_last_timestamp_storage(owner : felt) -> (last_seen : felt):
 end
+
+# --- External functions
 
 @external
 func alive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
@@ -86,6 +95,8 @@ func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(o
 
     return ()
 end
+
+# --- Internal functions
 
 func revoke_previous_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller_address) = get_caller_address()
