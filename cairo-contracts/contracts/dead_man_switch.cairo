@@ -38,7 +38,11 @@ end
 # ---- Storage vars
 
 @storage_var
-func token_to_redeem_address_storage() -> (token_address):
+func token_to_redeem_address_storage() -> (token_address : felt):
+end
+
+@storage_var
+func timestamp_storage() -> (timestamp : felt):
 end
 
 # Could be holding an array of heirs
@@ -60,10 +64,11 @@ end
 func time_until_death{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     owner : felt
 ) -> (time_left : felt):
+    alloc_locals
     let (redeem_death_delay) = owner_delay_storage.read(owner)
     let (owner_last_seen) = owner_last_timestamp_storage.read(owner)
     let time_of_death = owner_last_seen + redeem_death_delay
-    let (block_timestamp) = get_block_timestamp()
+    let (block_timestamp) = get_block_timestamp_internal()
     let time_left = time_of_death - block_timestamp
     return (time_left)
 end
@@ -98,11 +103,11 @@ end
 
 @view
 func get_allowance_for{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    heir : felt
+    owner : felt
 ) -> (allowance : Uint256):
     let (token_address) = token_to_redeem_address_storage.read()
     let (contract_address) = get_contract_address()
-    let (allowance) = IERC20.allowance(token_address, heir, contract_address)
+    let (allowance) = IERC20.allowance(token_address, owner, contract_address)
     return (allowance)
 end
 
@@ -110,8 +115,9 @@ end
 
 @external
 func alive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+    alloc_locals
     let (caller_address) = get_caller_address()
-    let (current_timestamp) = get_block_timestamp()
+    let (current_timestamp) = get_block_timestamp_internal()
     owner_last_timestamp_storage.write(caller_address, current_timestamp)
     OwnerNotDead.emit(caller_address)
     return ()
@@ -121,8 +127,9 @@ end
 func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     heir : felt, delay : felt
 ):
-    checkAllowanceFor(heir)
+    alloc_locals
     let (caller_address) = get_caller_address()
+    checkAllowanceFor(caller_address)
     let (contract_address) = get_contract_address()
     owner_heir_storage.write(caller_address, heir)
     owner_delay_storage.write(caller_address, delay)
@@ -132,15 +139,23 @@ func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
 end
 
 @external
+func test_set_timestamp{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    timestamp : felt
+):
+    timestamp_storage.write(timestamp)
+    return ()
+end
+
+@external
 func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt):
     alloc_locals
     # Check that the caller is indeed an Heir
     let (caller_address) = get_caller_address()
-    let (owner_address) = owner_heir_storage.read(owner)
-    assert caller_address = owner_address
+    let (heir_address) = owner_heir_storage.read(owner)
+    assert caller_address = heir_address
 
     # Check that the owner is now really 'dead'
-    let (current_timestamp) = get_block_timestamp()
+    let (current_timestamp) = get_block_timestamp_internal()
     let (owner_last_seen) = owner_last_timestamp_storage.read(owner)
     let (redeem_death_delay) = owner_delay_storage.read(caller_address)
     let time_of_death = owner_last_seen + redeem_death_delay
@@ -149,18 +164,19 @@ func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(o
     # actual transfer
     let (balance) = get_min_for(owner)
     let (token_to_redeem_address) = token_to_redeem_address_storage.read()
-    IERC20.transfer(token_to_redeem_address, caller_address, balance)
-
+    assert balance.low = 100
+    let (succeed) = IERC20.transferFrom(token_to_redeem_address, owner, caller_address, balance)
+    assert succeed = 1
     HeirRedeemed.emit(caller_address, owner, balance)
 
     return ()
 end
 
 func checkAllowanceFor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    heir : felt
+    owner : felt
 ):
     alloc_locals
-    let (allowance) = get_allowance_for(heir)
+    let (allowance) = get_allowance_for(owner)
     let oneAsUint256 = Uint256(1, 0)
     let (is_zero) = uint256_lt(allowance, oneAsUint256)
     with_attr error_message("Please allow before setting an heir"):
@@ -173,10 +189,8 @@ func get_min_for{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     owner : felt
 ) -> (balance : Uint256):
     alloc_locals
-    # Transfer the total owner's balance
     let (token_to_redeem_address) = token_to_redeem_address_storage.read()
     let (contract_address) = get_contract_address()
-    # TODO Should be changed to min between balance and allowance
     let (owner_total_balance) = IERC20.balanceOf(token_to_redeem_address, owner)
     let (allowance) = IERC20.allowance(token_to_redeem_address, owner, contract_address)
     let (lt) = uint256_lt(owner_total_balance, allowance)
@@ -184,4 +198,16 @@ func get_min_for{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
         return (owner_total_balance)
     end
     return (allowance)
+end
+
+func get_block_timestamp_internal{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
+}() -> (timestamp : felt):
+    alloc_locals
+    let (timestamp) = timestamp_storage.read()
+    if timestamp == 0:
+        let (tmp) = get_block_timestamp()
+        return (tmp)
+    end
+    return (timestamp)
 end
