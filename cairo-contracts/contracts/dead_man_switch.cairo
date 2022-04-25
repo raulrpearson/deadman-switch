@@ -9,6 +9,15 @@ from starkware.cairo.common.uint256 import Uint256
 # Constants
 const REDEEM_DEATH_DELAY = 63113904  # 2 years
 const TOKEN_TO_REDEEM = 42  # To be defined
+const MAX_128_BITS_VALUE = 340282366920938463463374607431768211456
+
+@constructor
+func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    token_address : felt
+):
+    token_to_redeem_address_storage.write(token_address)
+    return ()
+end
 
 @event
 func HeirRedeemed(heir : felt, owner : felt, amount : Uint256):
