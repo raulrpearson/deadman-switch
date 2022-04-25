@@ -6,6 +6,7 @@ from starkware.starknet.common.syscalls import get_block_number, get_block_times
 from contracts.ERC20.IERC20 import IERC20
 from starkware.cairo.common.uint256 import Uint256
 from starkware.cairo.common.math import assert_le_felt, assert_lt_felt
+from starkware.cairo.common.math_cmp import is_le
 
 # ---- Constants
 
@@ -72,6 +73,17 @@ func heir_of{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     heir : felt
 ):
     return owner_heir_storage.read(owner)
+end
+
+@view
+func is_he_still_alive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    owner : felt
+) -> (res : felt):
+    alloc_locals
+    let (owner_last_seen) = owner_last_timestamp_storage.read(owner)
+    let (current_time) = get_block_timestamp()
+    let (res) = is_le(owner_last_seen + REDEEM_DEATH_DELAY, current_time)
+    return (res=res)
 end
 
 @external
