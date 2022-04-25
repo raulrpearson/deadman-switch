@@ -23,7 +23,7 @@ end
 # ---- Events
 
 @event
-func NotDead()
+func NotDead(owner : felt)
 end
 
 @event
@@ -85,7 +85,7 @@ func alive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (current_timestamp) = get_block_timestamp()
     owner_last_timestamp_storage.write(caller_address, current_timestamp)
 
-    NotDead.emit()
+    NotDead.emit(caller_address)
 
     return ()
 end
