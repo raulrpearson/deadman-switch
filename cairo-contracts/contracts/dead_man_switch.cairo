@@ -6,6 +6,7 @@ from starkware.starknet.common.syscalls import get_block_number, get_block_times
 from contracts.ERC20.IERC20 import IERC20
 from starkware.cairo.common.uint256 import Uint256, uint256_lt
 from starkware.cairo.common.math import assert_le_felt, assert_lt_felt
+from starkware.cairo.common.math_cmp import is_le
 
 # ---- Constants
 
@@ -69,8 +70,11 @@ func time_until_death{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     let (owner_last_seen) = owner_last_timestamp_storage.read(owner)
     let time_of_death = owner_last_seen + redeem_death_delay
     let (block_timestamp) = get_block_timestamp()
-    let time_left = time_of_death - block_timestamp
-    return (time_left)
+    let (time_left) = is_le(time_of_death, block_timestamp)
+    if time_left == 1:
+        return (0)
+    end
+    return (time_of_death - block_timestamp)
 end
 
 @view
@@ -141,7 +145,6 @@ func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     return ()
 end
 
-@external
 func test_set_timestamp{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     timestamp : felt
 ):
