@@ -167,7 +167,6 @@ func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(o
     # actual transfer
     let (balance) = get_min_for(owner)
     let (token_to_redeem_address) = token_to_redeem_address_storage.read()
-    assert balance.low = 100
     let (succeed) = IERC20.transferFrom(token_to_redeem_address, owner, caller_address, balance)
     assert succeed = 1
     HeirRedeemed.emit(caller_address, owner, balance)
