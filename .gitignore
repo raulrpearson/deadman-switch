@@ -8,4 +8,5 @@ cairo-contracts/tests/__pycache__
 env
 *.deployments.txt
 *.json
+.pytest_cache
 goerli.deployments.txt
