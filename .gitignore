@@ -6,3 +6,4 @@ cairo-contracts/accounts.json
 cairo-contracts/artifacts
 cairo-contracts/tests/__pycache__
 *.json
+goerli.deployments.txt
