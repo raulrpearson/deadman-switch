@@ -137,7 +137,10 @@ func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     let (contract_address) = get_contract_address()
     owner_heir_storage.write(caller_address, heir)
     owner_delay_storage.write(caller_address, delay)
+
     HeirSet.emit(caller_address, heir, delay)
+
+    internal_alive()
 
     return ()
 end
@@ -174,6 +177,8 @@ func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(o
     return ()
 end
 
+# ---- Internal
+
 func checkAllowanceFor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     owner : felt
 ):
@@ -202,14 +207,11 @@ func get_min_for{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return (allowance)
 end
 
-func get_block_timestamp_internal{
-    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
-}() -> (timestamp : felt):
+func internal_alive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     alloc_locals
-    let (timestamp) = timestamp_storage.read()
-    if timestamp == 0:
-        let (tmp) = get_block_timestamp()
-        return (tmp)
-    end
-    return (timestamp)
+    let (caller_address) = get_caller_address()
+    let (current_timestamp) = get_block_timestamp()
+    owner_last_timestamp_storage.write(caller_address, current_timestamp)
+    OwnerNotDead.emit(caller_address)
+    return ()
 end
