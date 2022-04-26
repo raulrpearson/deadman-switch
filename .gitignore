@@ -5,5 +5,7 @@ cairo-contracts/node.json
 cairo-contracts/accounts.json
 cairo-contracts/artifacts
 cairo-contracts/tests/__pycache__
+env
+*.deployments.txt
 *.json
 goerli.deployments.txt
