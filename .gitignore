@@ -9,3 +9,4 @@ env
 *.deployments.txt
 *.json
 .pytest_cache
+goerli.deployments.txt
