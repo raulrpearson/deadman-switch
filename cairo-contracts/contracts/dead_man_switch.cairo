@@ -68,7 +68,7 @@ func time_until_death{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_ch
     let (redeem_death_delay) = owner_delay_storage.read(owner)
     let (owner_last_seen) = owner_last_timestamp_storage.read(owner)
     let time_of_death = owner_last_seen + redeem_death_delay
-    let (block_timestamp) = get_block_timestamp_internal()
+    let (block_timestamp) = get_block_timestamp()
     let time_left = time_of_death - block_timestamp
     return (time_left)
 end
@@ -117,7 +117,7 @@ end
 func alive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     alloc_locals
     let (caller_address) = get_caller_address()
-    let (current_timestamp) = get_block_timestamp_internal()
+    let (current_timestamp) = get_block_timestamp()
     owner_last_timestamp_storage.write(caller_address, current_timestamp)
     OwnerNotDead.emit(caller_address)
     return ()
@@ -138,7 +138,6 @@ func set_heir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     return ()
 end
 
-@external
 func test_set_timestamp{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     timestamp : felt
 ):
@@ -155,7 +154,7 @@ func redeem{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(o
     assert caller_address = heir_address
 
     # Check that the owner is now really 'dead'
-    let (current_timestamp) = get_block_timestamp_internal()
+    let (current_timestamp) = get_block_timestamp()
     let (owner_last_seen) = owner_last_timestamp_storage.read(owner)
     let (redeem_death_delay) = owner_delay_storage.read(caller_address)
     let time_of_death = owner_last_seen + redeem_death_delay
